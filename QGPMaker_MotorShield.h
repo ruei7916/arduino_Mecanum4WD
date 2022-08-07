@@ -43,9 +43,11 @@ public:
   friend class QGPMaker_MotorShield;
   void run(uint8_t);
   void setSpeed(uint8_t);
+  void setPwm(int16_t);
 
 private:
-  uint8_t _speed, IN1pin, IN2pin, MDIR;
+  uint16_t _speed;
+  uint8_t IN1pin, IN2pin, MDIR;
   QGPMaker_MotorShield *MC;
   uint8_t motornum;
 };

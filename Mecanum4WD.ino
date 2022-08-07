@@ -1,6 +1,7 @@
 #include <Wire.h>
 #include "PS2X_lib.h"
 #include "QGPMaker_MotorShield.h"
+#include "QGPMaker_Encoder.h"
 
 QGPMaker_MotorShield AFMS = QGPMaker_MotorShield();
 PS2X ps2x;
@@ -9,6 +10,11 @@ QGPMaker_DCMotor *DCMotor_2 = AFMS.getMotor(2);
 QGPMaker_DCMotor *DCMotor_4 = AFMS.getMotor(4);
 QGPMaker_DCMotor *DCMotor_1 = AFMS.getMotor(1);
 QGPMaker_DCMotor *DCMotor_3 = AFMS.getMotor(3);
+
+QGPMaker_Encoder Encoder1(1);
+QGPMaker_Encoder Encoder2(2);
+QGPMaker_Encoder Encoder3(3);
+QGPMaker_Encoder Encoder4(4);
 
 void forward() {
   DCMotor_1->setSpeed(200);
@@ -87,23 +93,53 @@ void stopMoving() {
   DCMotor_4->run(RELEASE);
 }
 
+#define FRAME_HEADER      0X7B       // Frame header
+#define FRAME_TAIL        0X7D       // Frame tail
+#define DATA_SIZE    9          // The length of data sent by ROS to the lower machine 
+
+
+uint8_t recv_data[DATA_SIZE];
+int recv_count;
+bool start_frame;
+float x,y,z;
+
+float motor_1_target,motor_2_target,motor_3_target,motor_4_target;
+int16_t motor_1_pwm,motor_2_pwm,motor_3_pwm,motor_4_pwm;
+unsigned long last_time_send_data, last_time_control;
+
+
+#define wheel_radius 3.0
+// half of the distance between front wheels
+#define wheel_spacing 
+// half of the distance between front wheel and rear wheel
+#define axle_spacing 
+
+bool ps2_control;
+
 void setup(){
   AFMS.begin(50);
 
   int error = 0;
+  int c=100;
   do{
     error = ps2x.config_gamepad(13,11,10,12, true, true);
     if(error == 0){
+      ps2_control=true;
       break;
     }else{
+      ps2_control=false;
       delay(100);
     }
-  }while(1);
+  }while(c--);
   Serial.begin(115200);
-
+  recv_count = 0;
+  start_frame = false;
+  last_time_send_data = millis();
+  last_time_control = millis();
 }
 
 void loop(){
+  if(ps2_control){//從手柄接收模式
   ps2x.read_gamepad(false, 0);
   delay(30);
   if (ps2x.Button(PSB_PAD_UP)) {
@@ -158,34 +194,105 @@ void loop(){
     ps2x.read_gamepad(false, 0);
 
   }
-  int t;
+  delay(2);
+  }
+  else{//ROS模式
   if(Serial.available()){
-    t=Serial.read();
-    switch(t){
-      case '1':
-      forward();
-      break;
-      case '2':
-      backward();
-      break;
-      case '3':
-      moveLeft();
-      break;
-      case '4':
-      moveRight();
-      break;
-      case '5':
-      turnLeft();
-      break;
-      case '6':
-      turnRight();
-      break;
-      default:
-      break;
+    uint8_t t = Serial.read();
+    if(start_frame){
+      recv_data[recv_count++] = t;
+    }
+    else{
+      if(t==FRAME_HEADER){
+        start_frame = true;
+        recv_data[recv_count++] = t;
+      }
+    }
+    if(recv_count==DATA_SIZE){
+      recv_count = 0;
+      start_frame = false;
+      if(t==FRAME_TAIL){
+        // finish receiving a frame
+        if(recv_data[7]==(recv_data[0]^recv_data[1]^recv_data[2]^recv_data[3]^recv_data[4]^recv_data[5]^recv_data[6])){//檢查資料
+          // received frame data correct
+          x = (int16_t)((recv_data[1]<<8)|recv_data[2])/1000.0;
+          y = (int16_t)((recv_data[3]<<8)|recv_data[4])/1000.0;
+          z = (int16_t)((recv_data[5]<<8)|recv_data[6])/1000.0;
+        }
+      }
     }
   }
-  
-  
-  delay(2);
 
+
+ if(millis()-last_time_control>10){
+  motor_1_target = x-y-z*(wheel_spacing+axle_spacing);
+  motor_2_target = x+y-z*(wheel_spacing+axle_spacing);
+  motor_3_target = x-y+z*(wheel_spacing+axle_spacing);
+  motor_4_target = x+y+z*(wheel_spacing+axle_spacing);
+
+  motor_1_pwm=-Incremental_PI_A(Encoder1.getspeed()*wheel_radius,motor_1_target);
+  motor_2_pwm=-Incremental_PI_B(Encoder2.getspeed()*wheel_radius,motor_2_target);
+  motor_3_pwm=Incremental_PI_C(Encoder3.getspeed()*wheel_radius,motor_3_target);
+  motor_4_pwm=Incremental_PI_D(Encoder4.getspeed()*wheel_radius,motor_4_target);
+
+  DCMotor_1->setPwm(motor_1_pwm);
+  DCMotor_2->setPwm(motor_2_pwm);
+  DCMotor_3->setPwm(motor_3_pwm);
+  DCMotor_4->setPwm(motor_4_pwm);
+ }
+  
+  
+  // send data every 50ms
+  if(millis()-last_time_send_data>50){
+    // todo:send data
+    
+    last_time_send_data = millis();
+  }
+  }
+
+}
+
+
+
+float Velocity_KP=300,Velocity_KI=300; 
+
+int Incremental_PI_A (float Encoder,float Target)
+{ 	
+	 static float Bias,Pwm,Last_bias;
+	 Bias=Target-Encoder; //Calculate the deviation //计算偏差
+	 Pwm+=Velocity_KP*(Bias-Last_bias)+Velocity_KI*Bias; 
+	 if(Pwm>4096)Pwm=4096;
+	 if(Pwm<-4096)Pwm=-4096;
+	 Last_bias=Bias; //Save the last deviation //保存上一次偏差 
+	 return Pwm;    
+}
+int Incremental_PI_B (float Encoder,float Target)
+{  
+	 static float Bias,Pwm,Last_bias;
+	 Bias=Target-Encoder; //Calculate the deviation //计算偏差
+	 Pwm+=Velocity_KP*(Bias-Last_bias)+Velocity_KI*Bias;  
+	 if(Pwm>4096)Pwm=4096;
+	 if(Pwm<-4096)Pwm=-4096;
+	 Last_bias=Bias; //Save the last deviation //保存上一次偏差 
+	 return Pwm;
+}
+int Incremental_PI_C (float Encoder,float Target)
+{  
+	 static float Bias,Pwm,Last_bias;
+	 Bias=Target-Encoder; //Calculate the deviation //计算偏差
+	 Pwm+=Velocity_KP*(Bias-Last_bias)+Velocity_KI*Bias; 
+	 if(Pwm>4096)Pwm=4096;
+	 if(Pwm<-4096)Pwm=-4096;
+	 Last_bias=Bias; //Save the last deviation //保存上一次偏差 
+	 return Pwm; 
+}
+int Incremental_PI_D (float Encoder,float Target)
+{  
+	 static float Bias,Pwm,Last_bias;
+	 Bias=Target-Encoder; //Calculate the deviation //计算偏差
+	 Pwm+=Velocity_KP*(Bias-Last_bias)+Velocity_KI*Bias;  
+	 if(Pwm>4096)Pwm=4096;
+	 if(Pwm<-4096)Pwm=-4096;
+	 Last_bias=Bias; //Save the last deviation //保存上一次偏差 
+	 return Pwm; 
 }

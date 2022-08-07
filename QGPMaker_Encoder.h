@@ -13,7 +13,7 @@ typedef struct
   uint8_t pin1;
   uint8_t pin2;
   uint8_t state;
-  int32_t position;
+  volatile int32_t position;
 } QGPMakerEncoder_internal_state_t;
 
 static QGPMakerEncoder_internal_state_t *interruptArgs[4]; //ENCODER_ARGLIST_SIZE
@@ -41,13 +41,13 @@ public:
     }
     else if (num == 2)
     {
-      pin1 = 3;
-      pin2 = 2;
+      pin1 = 2;
+      pin2 = 3;
     }
     else if (num == 3)
     {
-      pin1 = 5;
-      pin2 = 4;
+      pin1 = 4;
+      pin2 = 5;
     }
 
 #ifdef INPUT_PULLUP
@@ -177,6 +177,25 @@ public:
     prev_encoder_ticks_ = encoder_ticks;
 
     return (delta_ticks / counts_per_rev_) / dtm;
+  }
+ 
+  float getspeed()// rad/sec
+  {
+    long encoder_ticks = readAndReset();
+    //this function calculates the motor's RPM based on encoder ticks and delta time
+    unsigned long current_time = millis();
+    unsigned long dt = current_time - prev_update_time_;
+
+    //convert the time from milliseconds to seconds
+    double dtm = (double)dt / 1000;
+    double delta_ticks = encoder_ticks - prev_encoder_ticks_;
+
+    //calculate wheel's speed
+
+    prev_update_time_ = current_time;
+    prev_encoder_ticks_ = encoder_ticks;
+
+    return (float)TWO_PI * ((delta_ticks / counts_per_rev_) / dtm);
   }
 
 public:

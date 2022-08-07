@@ -86,14 +86,14 @@ QGPMaker_DCMotor *QGPMaker_MotorShield::getMotor(uint8_t num)
     else if (num == 2)
     {
       pwm = 2;
-      in2 = 14;
-      in1 = 15;
+      in2 = 15;
+      in1 = 14;
     }
     else if (num == 3)
     {
       pwm = 7;
-      in2 = 12;
-      in1 = 13;
+      in2 = 13;
+      in1 = 12;
     }
     //    dcmotors[num].PWMpin = pwm;
     dcmotors[num].IN1pin = in1;
@@ -120,11 +120,11 @@ void QGPMaker_DCMotor::run(uint8_t cmd)
   {
   case FORWARD:
     MC->setPin(IN2pin, LOW); // take low first to avoid 'break'
-    MC->setPWM(IN1pin, _speed * 16);
+    MC->setPWM(IN1pin, _speed);
     break;
   case BACKWARD:
     MC->setPin(IN1pin, LOW); // take low first to avoid 'break'
-    MC->setPWM(IN2pin, _speed * 16);
+    MC->setPWM(IN2pin, _speed);
     break;
   case RELEASE:
     MC->setPin(IN1pin, LOW);
@@ -139,6 +139,13 @@ void QGPMaker_DCMotor::run(uint8_t cmd)
 
 void QGPMaker_DCMotor::setSpeed(uint8_t speed)
 {
-  _speed = speed;
+  _speed = speed*16;
   run(MDIR);
+}
+
+void QGPMaker_DCMotor::setPwm(int16_t speed)
+{
+  _speed = abs(speed);
+  if(speed>=0)run(FORWARD);
+  else run(BACKWARD);
 }
