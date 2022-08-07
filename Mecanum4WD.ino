@@ -223,7 +223,7 @@ void loop(){
     }
   }
 
-
+ // runs at 100Hz
  if(millis()-last_time_control>10){
   motor_1_target = x-y-z*(wheel_spacing+axle_spacing);
   motor_2_target = x+y-z*(wheel_spacing+axle_spacing);
@@ -239,6 +239,8 @@ void loop(){
   DCMotor_2->setPwm(motor_2_pwm);
   DCMotor_3->setPwm(motor_3_pwm);
   DCMotor_4->setPwm(motor_4_pwm);
+
+  last_time_control = millis();
  }
   
   
