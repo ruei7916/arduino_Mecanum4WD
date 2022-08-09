@@ -247,7 +247,30 @@ void loop(){
   // send data every 50ms
   if(millis()-last_time_send_data>50){
     // todo:send data
-    
+    	  pos1 = Encoder1.read();
+	  pos2 = Encoder2.read();
+    	  pos3 = Encoder3.read();
+    	  pos4 = Encoder4.read();
+	  rpm1 = 600*(pos1/4320);  // 單位:round/minute
+	  rpm2 = 600*(pos2/4320);
+	  rpm3 = 600*(pos3/4320);
+	  rpm4 = 600*(pos4/4320);
+	  rpm1_final = (rpm1*2*3.14)/60; // 單位:radius/second
+	  rpm2_final = (rpm2*2*3.14)/60;
+	  rpm3_final = (rpm3*2*3.14)/60;
+	  rpm4_final = (rpm4*2*3.14)/60;
+	  Encoder1.write(0); // 編碼器設置為0
+	  Encoder2.write(0);
+	  Encoder3.write(0);
+	  Encoder4.write(0);
+	  Serial.print(rpm1_final); // 輸出4個輪子的速度
+	  Serial.print('>');
+	  Serial.print(rpm2_final);
+	  Serial.print('>');
+	  Serial.print(rpm3_final);
+	  Serial.print('>');
+	  Serial.print(rpm4_final);
+	  
     last_time_send_data = millis();
   }
   }
