@@ -263,13 +263,32 @@ void loop(){
 	  Encoder2.write(0);
 	  Encoder3.write(0);
 	  Encoder4.write(0);
-	  Serial.print(rpm1_final); // 輸出4個輪子的速度
-	  Serial.print('>');
-	  Serial.print(rpm2_final);
-	  Serial.print('>');
-	  Serial.print(rpm3_final);
-	  Serial.print('>');
-	  Serial.print(rpm4_final);
+	  
+	  int16_t M1, M2, M3, M4; // 把轉速變成16bits
+	  M1 = rpm1_final*1000;
+	  send_data[1] = M1;     // 分成2個8bits輸出
+	  send_data[0] = M1>>8;
+	  
+	  M2 = rpm2_final*1000;
+	  send_data[3] = M2;
+	  send_data[2] = M2>>8;
+	  
+	  M3 = rpm3_final*1000;
+	  send_data[5] = M3;
+	  send_data[4] = M3>>8;
+	  
+	  M4 = rpm4_final*1000;
+	  send_data[7] = M4;
+	  send_data[6] = M4>>8;
+	  
+	  Serial.write(send_data[0]); // 輸出4個輪子的速度
+	  Serial.write(send_data[1]);
+	  Serial.write(send_data[2]);
+	  Serial.write(send_data[3]);
+	  Serial.write(send_data[4]);
+	  Serial.write(send_data[5]);
+	  Serial.write(send_data[6]);
+	  Serial.write(send_data[7]);
 	  
     last_time_send_data = millis();
   }
