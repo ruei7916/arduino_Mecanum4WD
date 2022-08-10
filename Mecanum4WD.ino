@@ -99,6 +99,7 @@ void stopMoving() {
 
 
 uint8_t recv_data[DATA_SIZE];
+uint8_t send_data[11];
 int recv_count;
 bool start_frame;
 float x,y,z;
@@ -246,19 +247,18 @@ void loop(){
   
   // send data every 50ms
   if(millis()-last_time_send_data>50){
-    // todo:send data
-    	  pos1 = Encoder1.read();
-	  pos2 = Encoder2.read();
-    	  pos3 = Encoder3.read();
-    	  pos4 = Encoder4.read();
-	  rpm1 = 600*(pos1/4320);  // 單位:round/minute
-	  rpm2 = 600*(pos2/4320);
-	  rpm3 = 600*(pos3/4320);
-	  rpm4 = 600*(pos4/4320);
-	  rpm1_final = (rpm1*2*3.14)/60; // 單位:radius/second
-	  rpm2_final = (rpm2*2*3.14)/60;
-	  rpm3_final = (rpm3*2*3.14)/60;
-	  rpm4_final = (rpm4*2*3.14)/60;
+    int32_t pos1 = Encoder1.read();
+	  int32_t pos2 = Encoder2.read();
+    int32_t pos3 = Encoder3.read();
+    int32_t pos4 = Encoder4.read();
+	  float rpm1 = 600*(pos1/4320.0);  // 單位:round/minute
+	  float rpm2 = 600*(pos2/4320.0);
+	  float rpm3 = 600*(pos3/4320.0);
+	  float rpm4 = 600*(pos4/4320.0);
+	  float rpm1_final = (rpm1*2*3.14)/60; // 單位:radius/second
+	  float rpm2_final = (rpm2*2*3.14)/60;
+	  float rpm3_final = (rpm3*2*3.14)/60;
+	  float rpm4_final = (rpm4*2*3.14)/60;
 	  Encoder1.write(0); // 編碼器設置為0
 	  Encoder2.write(0);
 	  Encoder3.write(0);
@@ -281,6 +281,7 @@ void loop(){
 	  send_data[7] = M4;
 	  send_data[6] = M4>>8;
 	  
+    Serial.write(FRAME_HEADER);
 	  Serial.write(send_data[0]); // 輸出4個輪子的速度
 	  Serial.write(send_data[1]);
 	  Serial.write(send_data[2]);
@@ -289,6 +290,8 @@ void loop(){
 	  Serial.write(send_data[5]);
 	  Serial.write(send_data[6]);
 	  Serial.write(send_data[7]);
+    Serial.write(FRAME_HEADER^send_data[0]^send_data[1]^send_data[2]^send_data[3]^send_data[4]^send_data[5]^send_data[6]^send_data[7]);
+    Serial.write(FRAME_TAIL);
 	  
     last_time_send_data = millis();
   }
