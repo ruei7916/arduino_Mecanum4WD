@@ -109,11 +109,11 @@ int16_t motor_1_pwm,motor_2_pwm,motor_3_pwm,motor_4_pwm;
 unsigned long last_time_send_data, last_time_control;
 
 
-#define wheel_radius 3.0/100 //meter
+#define wheel_radius (3.0/100) //meter
 // half of the distance between front wheels
-#define wheel_spacing 19.5/2.0/100 //meter
+#define wheel_spacing (19.5/2.0/100) //meter
 // half of the distance between front wheel and rear wheel
-#define axle_spacing 15.1/2.0/100 //meter
+#define axle_spacing (15.1/2.0/100) //meter
 
 bool ps2_control;
 
