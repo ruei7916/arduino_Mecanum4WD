@@ -132,7 +132,7 @@ void setup(){
       delay(100);
     }
   }while(c--);
-  Serial.begin(115200);
+  Serial.begin(38400);
   recv_count = 0;
   start_frame = false;
   last_time_send_data = millis();
