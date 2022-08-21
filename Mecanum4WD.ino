@@ -203,8 +203,7 @@ void loop(){
     if(start_frame){
       recv_data[recv_count++] = t;
     }
-    else{
-      if(t==FRAME_HEADER){
+    else if(t==FRAME_HEADER){
         start_frame = true;
         recv_data[recv_count++] = t;
       }
@@ -223,7 +222,7 @@ void loop(){
       }
     }
   }
-
+}
  // runs at 100Hz
  if(millis()-last_time_control>10){
   motor_1_target = x-y-z*(wheel_spacing+axle_spacing);
@@ -297,7 +296,7 @@ void loop(){
   }
   }
 
-}
+
 
 
 
