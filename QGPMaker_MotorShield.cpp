@@ -146,6 +146,7 @@ void QGPMaker_DCMotor::setSpeed(uint8_t speed)
 void QGPMaker_DCMotor::setPwm(int16_t speed)
 {
   _speed = abs(speed);
-  if(speed>=0)run(FORWARD);
+  if(speed>0)run(FORWARD);
+  else if(speed==0)run(RELEASE);
   else run(BACKWARD);
 }
