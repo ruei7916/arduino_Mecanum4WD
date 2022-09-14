@@ -222,8 +222,8 @@ void loop(){
       motor_3_target = x-y+z*(wheel_spacing+axle_spacing);
       motor_4_target = x+y+z*(wheel_spacing+axle_spacing);
     
-      motor_1_pwm=-Incremental_PI_A(Encoder1.getspeed()*wheel_radius,motor_1_target);
-      motor_2_pwm=-Incremental_PI_B(Encoder2.getspeed()*wheel_radius,motor_2_target);
+      motor_1_pwm=Incremental_PI_A(Encoder1.getspeed()*wheel_radius,motor_1_target);
+      motor_2_pwm=Incremental_PI_B(Encoder2.getspeed()*wheel_radius,motor_2_target);
       motor_3_pwm=Incremental_PI_C(Encoder3.getspeed()*wheel_radius,motor_3_target);
       motor_4_pwm=Incremental_PI_D(Encoder4.getspeed()*wheel_radius,motor_4_target);
     
