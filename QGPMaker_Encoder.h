@@ -183,11 +183,11 @@ public:
   {
     long encoder_ticks = readAndReset();
     //this function calculates the motor's RPM based on encoder ticks and delta time
-    unsigned long current_time = micros();
+    unsigned long current_time = millis();
     unsigned long dt = current_time - prev_update_time_;
 
     //convert the time from milliseconds to seconds
-    double dtm = (double)dt / 1000000;
+    double dtm = (double)dt / 1000;
     double delta_ticks = encoder_ticks - prev_encoder_ticks_;
 
     //calculate wheel's speed

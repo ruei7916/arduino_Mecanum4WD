@@ -106,6 +106,7 @@ float x,y,z;
 
 float motor_1_target, motor_2_target, motor_3_target, motor_4_target;
 int16_t motor_1_pwm, motor_2_pwm, motor_3_pwm, motor_4_pwm;
+float m1_speed, m2_speed, m3_speed, m4_speed;
 unsigned long last_time_send_data, last_time_control;
 
 // wheel radius
@@ -189,6 +190,17 @@ void loop(){
       ps2x.read_gamepad(false, 0);
     }
     delay(2);
+    
+    // this runs at 100Hz
+    if(millis()-last_time_control>10){
+
+      m1_speed = Encoder1.getspeed();
+      m2_speed = Encoder2.getspeed();
+      m3_speed = Encoder3.getspeed();
+      m4_speed = Encoder4.getspeed();
+    
+      last_time_control = millis();
+    }
   }
   else{ //ROS模式
     if(Serial.available()){
@@ -221,11 +233,16 @@ void loop(){
       motor_2_target = x+y-z*(wheel_spacing+axle_spacing);
       motor_3_target = x-y+z*(wheel_spacing+axle_spacing);
       motor_4_target = x+y+z*(wheel_spacing+axle_spacing);
+
+      m1_speed = Encoder1.getspeed();
+      m2_speed = Encoder2.getspeed();
+      m3_speed = Encoder3.getspeed();
+      m4_speed = Encoder4.getspeed();
     
-      motor_1_pwm=Incremental_PI_A(Encoder1.getspeed()*wheel_radius,motor_1_target);
-      motor_2_pwm=Incremental_PI_B(Encoder2.getspeed()*wheel_radius,motor_2_target);
-      motor_3_pwm=Incremental_PI_C(Encoder3.getspeed()*wheel_radius,motor_3_target);
-      motor_4_pwm=Incremental_PI_D(Encoder4.getspeed()*wheel_radius,motor_4_target);
+      motor_1_pwm=Incremental_PI_A(m1_speed*wheel_radius,motor_1_target);
+      motor_2_pwm=Incremental_PI_B(m2_speed*wheel_radius,motor_2_target);
+      motor_3_pwm=Incremental_PI_C(m3_speed*wheel_radius,motor_3_target);
+      motor_4_pwm=Incremental_PI_D(m4_speed*wheel_radius,motor_4_target);
     
       DCMotor_1->setPwm(motor_1_pwm);
       DCMotor_2->setPwm(motor_2_pwm);
@@ -237,11 +254,7 @@ void loop(){
   }
   // send data every 50ms
   if(millis()-last_time_send_data>50){
-    float m1_speed = Encoder1.getspeed();
-    float m2_speed = Encoder2.getspeed();
-    float m3_speed = Encoder3.getspeed();
-    float m4_speed = Encoder4.getspeed();
-
+    
     int16_t M1, M2, M3, M4; // 把轉速變成16bits
     M1 = m1_speed*1000;
     send_data[1] = M1;     // 分成2個8bits輸出
