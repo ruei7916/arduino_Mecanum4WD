@@ -188,12 +188,11 @@ public:
 
     //convert the time from milliseconds to seconds
     double dtm = (double)dt / 1000;
-    double delta_ticks = encoder_ticks - prev_encoder_ticks_;
+    double delta_ticks = encoder_ticks;
 
     //calculate wheel's speed
 
     prev_update_time_ = current_time;
-    prev_encoder_ticks_ = encoder_ticks;
 
     return (float)TWO_PI * ((delta_ticks / counts_per_rev_) / dtm);
   }
