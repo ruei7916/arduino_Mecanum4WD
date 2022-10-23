@@ -304,8 +304,8 @@ int Incremental_PI_A (float Encoder,float Target)
   }
   Bias=Target-Encoder; //Calculate the deviation //计算偏差
   Pwm+=Velocity_KP*(Bias-Last_bias)+Velocity_KI*Bias; 
-  if(Pwm>4096)Pwm=4096;
-  if(Pwm<-4096)Pwm=-4096;
+  if(Pwm>4096.0)Pwm=4096.0;
+  if(Pwm<-4096.0)Pwm=-4096.0;
   Last_bias=Bias; //Save the last deviation //保存上一次偏差 
   return Pwm;    
 }
@@ -320,8 +320,8 @@ int Incremental_PI_B (float Encoder,float Target)
   }
   Bias=Target-Encoder; //Calculate the deviation //计算偏差
   Pwm+=Velocity_KP*(Bias-Last_bias)+Velocity_KI*Bias;  
-  if(Pwm>4096)Pwm=4096;
-  if(Pwm<-4096)Pwm=-4096;
+  if(Pwm>4096.0)Pwm=4096.0;
+  if(Pwm<-4096.0)Pwm=-4096.0;
   Last_bias=Bias; //Save the last deviation //保存上一次偏差 
   return Pwm;
 }
@@ -336,8 +336,8 @@ int Incremental_PI_C (float Encoder,float Target)
   }
   Bias=Target-Encoder; //Calculate the deviation //计算偏差
   Pwm+=Velocity_KP*(Bias-Last_bias)+Velocity_KI*Bias; 
-  if(Pwm>4096)Pwm=4096;
-  if(Pwm<-4096)Pwm=-4096;
+  if(Pwm>4096.0)Pwm=4096.0;
+  if(Pwm<-4096.0)Pwm=-4096.0;
   Last_bias=Bias; //Save the last deviation //保存上一次偏差 
   return Pwm; 
 }
@@ -352,8 +352,8 @@ int Incremental_PI_D (float Encoder,float Target)
   }
   Bias=Target-Encoder; //Calculate the deviation //计算偏差
   Pwm+=Velocity_KP*(Bias-Last_bias)+Velocity_KI*Bias;  
-  if(Pwm>4096)Pwm=4096;
-  if(Pwm<-4096)Pwm=-4096;
+  if(Pwm>4096.0)Pwm=4096.0;
+  if(Pwm<-4096.0)Pwm=-4096.0;
   Last_bias=Bias; //Save the last deviation //保存上一次偏差 
   return Pwm; 
 }
