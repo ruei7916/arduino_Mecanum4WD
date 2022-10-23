@@ -120,8 +120,6 @@ bool ps2_control;
 
 void setup(){
   AFMS.begin(50);
-  //LED at pin8
-  pinMode(8, OUTPUT);
   int error = 0;
   int c=100;
   do{
@@ -224,16 +222,14 @@ void loop(){
             x = (int16_t)((recv_data[1]<<8)|recv_data[2])/1000.0;
             y = (int16_t)((recv_data[3]<<8)|recv_data[4])/1000.0;
             z = (int16_t)((recv_data[5]<<8)|recv_data[6])/1000.0;
-            //LED works
-            digitalWrite(8, HIGH);
+
           }
         }
       }
     }
     // this runs at 100Hz
     if(millis()-last_time_control>10){
-      //LED reset
-      digitalWrite(8, LOW);
+
       motor_1_target = x-y-z*(wheel_spacing+axle_spacing);
       motor_2_target = x+y-z*(wheel_spacing+axle_spacing);
       motor_3_target = x-y+z*(wheel_spacing+axle_spacing);
@@ -296,7 +292,7 @@ void loop(){
 
 
 /*incremental pi controllers*/
-float Velocity_KP=300,Velocity_KI=300; 
+float Velocity_KP=300.0,Velocity_KI=300.0; 
 int Incremental_PI_A (float Encoder,float Target)
 { 	
   static float Bias,Pwm,Last_bias;
