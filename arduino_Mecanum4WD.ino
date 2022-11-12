@@ -121,7 +121,7 @@ bool ps2_control;
 void setup(){
   AFMS.begin(50);
   int error = 0;
-  int c=100;
+  int c=50;
   do{
     error = ps2x.config_gamepad(13,11,10,12, true, true);
     if(error == 0){
