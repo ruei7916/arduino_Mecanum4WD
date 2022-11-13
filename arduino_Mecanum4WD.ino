@@ -10,6 +10,7 @@ QGPMaker_DCMotor *DCMotor_2 = AFMS.getMotor(2);
 QGPMaker_DCMotor *DCMotor_4 = AFMS.getMotor(4);
 QGPMaker_DCMotor *DCMotor_1 = AFMS.getMotor(1);
 QGPMaker_DCMotor *DCMotor_3 = AFMS.getMotor(3);
+QGPMaker_Servo *Servo0 = AFMS.getServo(0);
 
 QGPMaker_Encoder Encoder1(1);
 QGPMaker_Encoder Encoder2(2);
@@ -95,11 +96,11 @@ void stopMoving() {
 
 #define FRAME_HEADER      0X7B       // Frame header
 #define FRAME_TAIL        0X7D       // Frame tail
-#define RECV_DATA_SIZE    9          // The length of data sent by ROS to the lower machine 
+#define RECV_DATA_SIZE    10          // The length of data sent by ROS to the lower machine 
 
 
 uint8_t recv_data[RECV_DATA_SIZE];
-uint8_t send_data[11];
+uint8_t send_data[12];
 int recv_count;
 bool start_frame;
 float x,y,z;
@@ -108,6 +109,7 @@ float motor_1_target, motor_2_target, motor_3_target, motor_4_target;
 int16_t motor_1_pwm, motor_2_pwm, motor_3_pwm, motor_4_pwm;
 float m1_speed, m2_speed, m3_speed, m4_speed;
 unsigned long last_time_send_data, last_time_control;
+uint8_t command_pick_count, result_pick_count;
 
 // wheel radius
 #define wheel_radius (3.0/100) // unit: meter
@@ -137,6 +139,9 @@ void setup(){
   start_frame = false;
   last_time_send_data = millis();
   last_time_control = millis();
+  Servo0->writeServo(10);
+  command_pick_count=0;
+  result_pick_count=0;
 }
 
 void loop(){
@@ -217,12 +222,28 @@ void loop(){
         start_frame = false;
         if(t==FRAME_TAIL){
           // finish receiving a frame
-          if(recv_data[7]==(recv_data[0]^recv_data[1]^recv_data[2]^recv_data[3]^recv_data[4]^recv_data[5]^recv_data[6])){ //檢查資料
+          if(recv_data[8]==(recv_data[0]^recv_data[1]^recv_data[2]^recv_data[3]^recv_data[4]^recv_data[5]^recv_data[6]^recv_data[7])){ //檢查資料
             // received frame data correct
             x = (int16_t)((recv_data[1]<<8)|recv_data[2])/1000.0;
             y = (int16_t)((recv_data[3]<<8)|recv_data[4])/1000.0;
             z = (int16_t)((recv_data[5]<<8)|recv_data[6])/1000.0;
-
+            if(command_pick_count!=recv_data[7]){
+              //pick ball
+              int degree = 10;
+              for (int i=0;i<20;i++){
+                degree+=6;
+                Servo0->writeServo(degree);
+                delay(50)
+              }
+              for (int i=0;i<20;i++){
+                degree-=6;
+                Servo0->writeServo(degree);
+                delay(50)
+              }
+              //finish picking ball
+              result_pick_count=recv_data[7];
+            }
+            command_pick_count=recv_data[7];
           }
         }
       }
@@ -282,7 +303,8 @@ void loop(){
     Serial.write(send_data[5]);
     Serial.write(send_data[6]);
     Serial.write(send_data[7]);
-    Serial.write(FRAME_HEADER^send_data[0]^send_data[1]^send_data[2]^send_data[3]^send_data[4]^send_data[5]^send_data[6]^send_data[7]);
+    Serial.write(result_pick_count);
+    Serial.write(FRAME_HEADER^send_data[0]^send_data[1]^send_data[2]^send_data[3]^send_data[4]^send_data[5]^send_data[6]^send_data[7]^result_pick_count);
     Serial.write(FRAME_TAIL);
     
     last_time_send_data = millis();

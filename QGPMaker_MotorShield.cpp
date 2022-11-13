@@ -86,20 +86,112 @@ QGPMaker_DCMotor *QGPMaker_MotorShield::getMotor(uint8_t num)
     else if (num == 2)
     {
       pwm = 2;
-      in2 = 15;
-      in1 = 14;
+      in2 = 14;
+      in1 = 15;
     }
     else if (num == 3)
     {
       pwm = 7;
-      in2 = 13;
-      in1 = 12;
+      in2 = 12;
+      in1 = 13;
     }
     //    dcmotors[num].PWMpin = pwm;
     dcmotors[num].IN1pin = in1;
     dcmotors[num].IN2pin = in2;
   }
   return &dcmotors[num];
+}
+
+QGPMaker_StepperMotor *QGPMaker_MotorShield::getStepper(uint16_t steps, uint8_t num)
+{
+  if (num > 2)
+    return NULL;
+
+  num--;
+
+  if (steppers[num].steppernum == 0)
+  {
+    // not init'd yet!
+    steppers[num].steppernum = num;
+    steppers[num].revsteps = steps;
+    steppers[num].MC = this;
+    uint8_t pwma, pwmb, ain1, ain2, bin1, bin2;
+    if (num == 0)
+    {
+      ain2 = 8;
+      ain1 = 9;
+      bin2 = 11;
+      bin1 = 10;
+    }
+    else if (num == 1)
+    {
+      ain2 = 12;
+      ain1 = 13;
+      bin2 = 14;
+      bin1 = 15;
+    }
+    steppers[num].AIN1pin = ain1;
+    steppers[num].AIN2pin = ain2;
+    steppers[num].BIN1pin = bin1;
+    steppers[num].BIN2pin = bin2;
+  }
+  return &steppers[num];
+}
+
+QGPMaker_Servo *QGPMaker_MotorShield::getServo(uint8_t num)
+{
+  if (num > 7)
+    return NULL;
+  //num--;
+  if (servos[num].servonum == 0)
+  {
+    // not init'd yet!
+    servos[num].servonum = num;
+    servos[num].MC = this;
+    servos[num].PWMpin = num;
+    servos[num].PWMfreq = _freq;
+  }
+  return &servos[num];
+}
+
+/******************************************
+               SERVOS
+******************************************/
+
+QGPMaker_Servo::QGPMaker_Servo(void)
+{
+  MC = NULL;
+  servonum = 0;
+  PWMpin = 0;
+  currentAngle = 0;
+}
+
+void QGPMaker_Servo::setServoPulse(double pulse)
+{
+  double pulselength;
+  pulselength = 1000000; // 1,000,000 us per second
+  pulselength /= 50;     // 50 Hz
+  pulselength /= 4096;   // 12 bits of resolution
+  pulse *= 1000;
+  pulse /= pulselength;
+  MC->setPWM(PWMpin, pulse);
+}
+void QGPMaker_Servo::writeServo(uint8_t angle)
+{
+  double pulse;
+  pulse = 0.5 + angle / 90.0;
+  setServoPulse(pulse);
+  currentAngle = angle;
+  /* if(n>1){
+     currentAngle[n-12]=angle;
+    }else{
+     currentAngle[n]=angle;
+    }*/
+}
+
+uint8_t QGPMaker_Servo::readDegrees()
+{
+  return currentAngle;
 }
 
 /******************************************
@@ -120,11 +212,11 @@ void QGPMaker_DCMotor::run(uint8_t cmd)
   {
   case FORWARD:
     MC->setPin(IN2pin, LOW); // take low first to avoid 'break'
-    MC->setPWM(IN1pin, _speed);
+    MC->setPWM(IN1pin, _speed * 16);
     break;
   case BACKWARD:
     MC->setPin(IN1pin, LOW); // take low first to avoid 'break'
-    MC->setPWM(IN2pin, _speed);
+    MC->setPWM(IN2pin, _speed * 16);
     break;
   case RELEASE:
     MC->setPin(IN1pin, LOW);
@@ -139,14 +231,333 @@ void QGPMaker_DCMotor::run(uint8_t cmd)
 
 void QGPMaker_DCMotor::setSpeed(uint8_t speed)
 {
-  _speed = speed*16;
+  _speed = speed;
   run(MDIR);
 }
 
-void QGPMaker_DCMotor::setPwm(int16_t speed)
+/******************************************
+               STEPPERS
+******************************************/
+
+QGPMaker_StepperMotor::QGPMaker_StepperMotor(void)
 {
-  _speed = abs(speed);
-  if(speed>0)run(FORWARD);
-  else if(speed==0)run(RELEASE);
-  else run(BACKWARD);
+  revsteps = steppernum = currentstep = 0;
+}
+/*
+
+  uint16_t steps, Adafruit_MotorShield controller)  {
+
+  revsteps = steps;
+  steppernum = 1;
+  currentstep = 0;
+
+  if (steppernum == 1) {
+    latch_state &= ~_BV(MOTOR1_A) & ~_BV(MOTOR1_B) &
+      ~_BV(MOTOR2_A) & ~_BV(MOTOR2_B); // all motor pins to 0
+
+    // enable both H bridges
+    pinMode(11, OUTPUT);
+    pinMode(3, OUTPUT);
+    digitalWrite(11, HIGH);
+    digitalWrite(3, HIGH);
+
+    // use PWM for microstepping support
+    MC->setPWM(1, 255);
+    MC->setPWM(2, 255);
+
+  } else if (steppernum == 2) {
+    latch_state &= ~_BV(MOTOR3_A) & ~_BV(MOTOR3_B) &
+      ~_BV(MOTOR4_A) & ~_BV(MOTOR4_B); // all motor pins to 0
+
+    // enable both H bridges
+    pinMode(5, OUTPUT);
+    pinMode(6, OUTPUT);
+    digitalWrite(5, HIGH);
+    digitalWrite(6, HIGH);
+
+    // use PWM for microstepping support
+    // use PWM for microstepping support
+    MC->setPWM(3, 255);
+    MC->setPWM(4, 255);
+  }
+  }
+*/
+
+void QGPMaker_StepperMotor::setSpeed(uint16_t rpm)
+{
+  //Serial.println("steps per rev: "); Serial.println(revsteps);
+  //Serial.println("RPM: "); Serial.println(rpm);
+
+  usperstep = 60000000 / ((uint32_t)revsteps * (uint32_t)rpm);
+  //   Serial.print("steps per rev: "); Serial.println(revsteps);
+  // Serial.print("usperstep: "); Serial.println(usperstep);
+}
+
+void QGPMaker_StepperMotor::release(void)
+{
+  MC->setPin(AIN1pin, LOW);
+  MC->setPin(AIN2pin, LOW);
+  MC->setPin(BIN1pin, LOW);
+  MC->setPin(BIN2pin, LOW);
+  // MC->setPWM(PWMApin, 0);
+  // MC->setPWM(PWMBpin, 0);
+}
+
+void QGPMaker_StepperMotor::step(uint16_t steps, uint8_t dir, uint8_t style)
+{
+  uint32_t uspers = usperstep;
+  uint8_t ret = 0;
+
+  if (style == INTERLEAVE)
+  {
+    uspers /= 2;
+  }
+  else if (style == MICROSTEP)
+  {
+    uspers /= MICROSTEPS;
+    steps *= MICROSTEPS;
+#ifdef MOTORDEBUG
+    Serial.print("steps = ");
+    Serial.println(steps, DEC);
+#endif
+  }
+
+  // while (steps--)
+  // {
+  //   unsigned long now = micros();
+  //   // Serial.println("step!"); Serial.println(uspers);
+  //   //  if (now - this->last_step_time >= uspers)
+  //   // {
+  //   //   this->last_step_time = now;
+  //   //    ret = onestep(dir, style);
+  //   // }
+  //   ret = onestep(dir, style);
+  //   delayMicroseconds(uspers); //uspers
+  //   // yield(); // required for ESP8266
+  // }
+
+  while (steps > 0)
+  {
+    
+    unsigned long now = micros();
+     if (now - this->last_step_time >= uspers)
+    {
+      this->last_step_time = now;
+       ret = onestep(dir, style);
+       steps--;
+    }
+  }
+}
+
+uint8_t QGPMaker_StepperMotor::onestep(uint8_t dir, uint8_t style)
+{
+  uint8_t a, b, c, d;
+  uint8_t ocrb, ocra;
+
+  ocra = ocrb = 255;
+
+  // next determine what sort of stepping procedure we're up to
+  if (style == SINGLE)
+  {
+    if ((currentstep / (MICROSTEPS / 2)) % 2)
+    { // we're at an odd step, weird
+      if (dir == FORWARD)
+      {
+        currentstep += MICROSTEPS / 2;
+      }
+      else
+      {
+        currentstep -= MICROSTEPS / 2;
+      }
+    }
+    else
+    { // go to the next even step
+      if (dir == FORWARD)
+      {
+        currentstep += MICROSTEPS;
+      }
+      else
+      {
+        currentstep -= MICROSTEPS;
+      }
+    }
+  }
+  else if (style == DOUBLE)
+  {
+    if (!(currentstep / (MICROSTEPS / 2) % 2))
+    { // we're at an even step, weird
+      if (dir == FORWARD)
+      {
+        currentstep += MICROSTEPS / 2;
+      }
+      else
+      {
+        currentstep -= MICROSTEPS / 2;
+      }
+    }
+    else
+    { // go to the next odd step
+      if (dir == FORWARD)
+      {
+        currentstep += MICROSTEPS;
+      }
+      else
+      {
+        currentstep -= MICROSTEPS;
+      }
+    }
+  }
+  else if (style == INTERLEAVE)
+  {
+    if (dir == FORWARD)
+    {
+      currentstep += MICROSTEPS / 2;
+    }
+    else
+    {
+      currentstep -= MICROSTEPS / 2;
+    }
+  }
+
+  if (style == MICROSTEP)
+  {
+    if (dir == FORWARD)
+    {
+      currentstep++;
+    }
+    else
+    {
+      // BACKWARDS
+      currentstep--;
+    }
+
+    currentstep += MICROSTEPS * 4;
+    currentstep %= MICROSTEPS * 4;
+
+    ocra = ocrb = 0;
+    if ((currentstep >= 0) && (currentstep < MICROSTEPS))
+    {
+      ocra = microstepcurve[MICROSTEPS - currentstep];
+      ocrb = microstepcurve[currentstep];
+    }
+    else if ((currentstep >= MICROSTEPS) && (currentstep < MICROSTEPS * 2))
+    {
+      ocra = microstepcurve[currentstep - MICROSTEPS];
+      ocrb = microstepcurve[MICROSTEPS * 2 - currentstep];
+    }
+    else if ((currentstep >= MICROSTEPS * 2) && (currentstep < MICROSTEPS * 3))
+    {
+      ocra = microstepcurve[MICROSTEPS * 3 - currentstep];
+      ocrb = microstepcurve[currentstep - MICROSTEPS * 2];
+    }
+    else if ((currentstep >= MICROSTEPS * 3) && (currentstep < MICROSTEPS * 4))
+    {
+      ocra = microstepcurve[currentstep - MICROSTEPS * 3];
+      ocrb = microstepcurve[MICROSTEPS * 4 - currentstep];
+    }
+  }
+
+  currentstep += MICROSTEPS * 4;
+  currentstep %= MICROSTEPS * 4;
+
+#ifdef MOTORDEBUG
+  Serial.print("current step: ");
+  Serial.println(currentstep, DEC);
+  Serial.print(" pwmA = ");
+  Serial.print(ocra, DEC);
+  Serial.print(" pwmB = ");
+  Serial.println(ocrb, DEC);
+#endif
+  //TODO 速度控制
+  // MC->setPWM(PWMApin, ocra * 16);
+  // MC->setPWM(PWMBpin, ocrb * 16);
+
+  // release all
+  uint8_t latch_state = 0; // all motor pins to 0
+
+  //Serial.println(step, DEC);
+  if (style == MICROSTEP)
+  {
+    if ((currentstep >= 0) && (currentstep < MICROSTEPS))
+      latch_state |= 0x03;
+    if ((currentstep >= MICROSTEPS) && (currentstep < MICROSTEPS * 2))
+      latch_state |= 0x06;
+    if ((currentstep >= MICROSTEPS * 2) && (currentstep < MICROSTEPS * 3))
+      latch_state |= 0x0C;
+    if ((currentstep >= MICROSTEPS * 3) && (currentstep < MICROSTEPS * 4))
+      latch_state |= 0x09;
+  }
+  else
+  {
+    // Serial.print("currentstep: ");
+    // Serial.println(currentstep);
+    switch (currentstep / (MICROSTEPS / 2))
+    {
+    case 0:
+      latch_state |= 0x1; // energize coil 1 only
+      break;
+    case 1:
+      latch_state |= 0x3; // energize coil 1+2
+      break;
+    case 2:
+      latch_state |= 0x2; // energize coil 2 only
+      break;
+    case 3:
+      latch_state |= 0x6; // energize coil 2+3
+      break;
+    case 4:
+      latch_state |= 0x4; // energize coil 3 only
+      break;
+    case 5:
+      latch_state |= 0xC; // energize coil 3+4
+      break;
+    case 6:
+      latch_state |= 0x8; // energize coil 4 only
+      break;
+    case 7:
+      latch_state |= 0x9; // energize coil 1+4
+      break;
+    }
+  }
+#ifdef MOTORDEBUG
+  Serial.print("Latch: 0x");
+  Serial.println(latch_state, HEX);
+#endif
+  // Serial.print("Latch: 0x");
+  // Serial.println(latch_state, HEX);
+  // Serial.print(">:");
+  if (latch_state & 0x1)
+  {
+    MC->setPWM(AIN2pin, ocra * 16);
+  }
+  else
+  {
+    MC->setPin(AIN2pin, LOW);
+  }
+  if (latch_state & 0x2)
+  {
+    MC->setPWM(BIN1pin, ocrb * 16);
+  }
+  else
+  {
+    MC->setPin(BIN1pin, LOW);
+  }
+  if (latch_state & 0x4)
+  {
+    MC->setPWM(AIN1pin, ocra * 16);
+  }
+  else
+  {
+    MC->setPin(AIN1pin, LOW);
+  }
+  if (latch_state & 0x8)
+  {
+    MC->setPWM(BIN2pin, ocrb * 16);
+  }
+  else
+  {
+    MC->setPin(BIN2pin, LOW);
+  }
+  Serial.println(" ");
+  return currentstep;
 }
