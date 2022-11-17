@@ -233,12 +233,13 @@ void loop(){
               for (int i=0;i<20;i++){
                 degree+=6;
                 Servo0->writeServo(degree);
-                delay(50)
+                delay(50);
               }
               for (int i=0;i<20;i++){
                 degree-=6;
                 Servo0->writeServo(degree);
-                delay(50)
+                delay(50);
+
               }
               //finish picking ball
               result_pick_count=recv_data[7];
@@ -325,7 +326,7 @@ int Incremental_PI_A (float Encoder,float Target)
     return Pwm;
   }
   if(Encoder>=1.0){
-    return Pwm
+    return Pwm;
   }
   Bias=Target-Encoder; //Calculate the deviation //计算偏差
   Pwm+=Velocity_KP*(Bias-Last_bias)+Velocity_KI*Bias; 
@@ -344,7 +345,7 @@ int Incremental_PI_B (float Encoder,float Target)
     return Pwm;
   }
   if(Encoder>=1.0){
-    return Pwm
+    return Pwm;
   }
   Bias=Target-Encoder; //Calculate the deviation //计算偏差
   Pwm+=Velocity_KP*(Bias-Last_bias)+Velocity_KI*Bias;  
@@ -363,7 +364,7 @@ int Incremental_PI_C (float Encoder,float Target)
     return Pwm;
   }
   if(Encoder>=1.0){
-    return Pwm
+    return Pwm;
   }
   Bias=Target-Encoder; //Calculate the deviation //计算偏差
   Pwm+=Velocity_KP*(Bias-Last_bias)+Velocity_KI*Bias; 
@@ -382,7 +383,7 @@ int Incremental_PI_D (float Encoder,float Target)
     return Pwm;
   }
   if(Encoder>=1.0){
-    return Pwm
+    return Pwm;
   }
   Bias=Target-Encoder; //Calculate the deviation //计算偏差
   Pwm+=Velocity_KP*(Bias-Last_bias)+Velocity_KI*Bias;  

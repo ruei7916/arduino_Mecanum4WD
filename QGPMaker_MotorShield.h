@@ -43,33 +43,13 @@ public:
   friend class QGPMaker_MotorShield;
   void run(uint8_t);
   void setSpeed(uint8_t);
+  void setPwm(int16_t);
 
 private:
-  uint8_t _speed, IN1pin, IN2pin, MDIR;
+  uint16_t _speed;
+  uint8_t IN1pin, IN2pin, MDIR;
   QGPMaker_MotorShield *MC;
   uint8_t motornum;
-};
-
-class QGPMaker_StepperMotor
-{
-public:
-  QGPMaker_StepperMotor(void);
-  friend class QGPMaker_MotorShield;
-
-  void step(uint16_t steps, uint8_t dir, uint8_t style = SINGLE);
-  void setSpeed(uint16_t);
-  uint8_t onestep(uint8_t dir, uint8_t style);
-  void release(void);
-  uint32_t usperstep;
-
-private:
-  uint8_t PWMApin, AIN1pin, AIN2pin;
-  uint8_t PWMBpin, BIN1pin, BIN2pin;
-  uint16_t revsteps; // # steps per revolution
-  uint8_t currentstep;
-  QGPMaker_MotorShield *MC;
-  uint8_t steppernum;
-  unsigned long last_step_time; // time stamp in us of when the last step was taken
 };
 
 class QGPMaker_Servo
@@ -87,7 +67,6 @@ private:
   QGPMaker_MotorShield *MC;
   uint8_t servonum, currentAngle;
 };
-
 class QGPMaker_MotorShield
 {
 public:
@@ -98,14 +77,13 @@ public:
   void setPWM(uint8_t pin, uint16_t val);
   void setPin(uint8_t pin, boolean val);
   QGPMaker_DCMotor *getMotor(uint8_t n);
-  QGPMaker_StepperMotor *getStepper(uint16_t steps, uint8_t n);
   QGPMaker_Servo *getServo(uint8_t n);
 
 private:
   uint8_t _addr;
   uint16_t _freq;
   QGPMaker_DCMotor dcmotors[4];
-  QGPMaker_StepperMotor steppers[2];
+
   Adafruit_MS_PWMServoDriver _pwm;
   QGPMaker_Servo servos[8];
 };
