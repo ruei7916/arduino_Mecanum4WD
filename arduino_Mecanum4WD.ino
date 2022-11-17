@@ -123,7 +123,7 @@ bool ps2_control;
 void setup(){
   AFMS.begin(50);
   int error = 0;
-  int c=50;
+  int c=30;
   do{
     error = ps2x.config_gamepad(13,11,10,12, true, true);
     if(error == 0){
@@ -131,7 +131,7 @@ void setup(){
       break;
     }else{
       ps2_control=false;
-      delay(100);
+      delay(80);
     }
   }while(c--);
   Serial.begin(38400);
