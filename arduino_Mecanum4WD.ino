@@ -230,12 +230,12 @@ void loop(){
             if(command_pick_count!=recv_data[7]){
               //pick ball
               int degree = 10;
-              for (int i=0;i<20;i++){
+              for (int i=0;i<21;i++){
                 degree+=6;
                 Servo0->writeServo(degree);
                 delay(50);
               }
-              for (int i=0;i<20;i++){
+              for (int i=0;i<21;i++){
                 degree-=6;
                 Servo0->writeServo(degree);
                 delay(50);
