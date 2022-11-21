@@ -4,7 +4,7 @@
 #include "QGPMaker_Encoder.h"
 
 QGPMaker_MotorShield AFMS = QGPMaker_MotorShield();
-PS2X ps2x;
+
 
 QGPMaker_DCMotor *DCMotor_2 = AFMS.getMotor(2);
 QGPMaker_DCMotor *DCMotor_4 = AFMS.getMotor(4);
@@ -16,72 +16,6 @@ QGPMaker_Encoder Encoder1(1);
 QGPMaker_Encoder Encoder2(2);
 QGPMaker_Encoder Encoder3(3);
 QGPMaker_Encoder Encoder4(4);
-
-void forward() {
-  DCMotor_1->setSpeed(200);
-  DCMotor_1->run(FORWARD);
-  DCMotor_2->setSpeed(200);
-  DCMotor_2->run(FORWARD);
-  DCMotor_3->setSpeed(200);
-  DCMotor_3->run(FORWARD);
-  DCMotor_4->setSpeed(200);
-  DCMotor_4->run(FORWARD);
-}
-
-void turnLeft() {
-  DCMotor_1->setSpeed(200);
-  DCMotor_1->run(BACKWARD);
-  DCMotor_2->setSpeed(200);
-  DCMotor_2->run(BACKWARD);
-  DCMotor_3->setSpeed(200);
-  DCMotor_3->run(FORWARD);
-  DCMotor_4->setSpeed(200);
-  DCMotor_4->run(FORWARD);
-}
-
-void turnRight() {
-  DCMotor_1->setSpeed(200);
-  DCMotor_1->run(FORWARD);
-  DCMotor_2->setSpeed(200);
-  DCMotor_2->run(FORWARD);
-  DCMotor_3->setSpeed(200);
-  DCMotor_3->run(BACKWARD);
-  DCMotor_4->setSpeed(200);
-  DCMotor_4->run(BACKWARD);
-}
-
-void moveLeft() {
-  DCMotor_1->setSpeed(200);
-  DCMotor_1->run(BACKWARD);
-  DCMotor_2->setSpeed(200);
-  DCMotor_2->run(FORWARD);
-  DCMotor_3->setSpeed(200);
-  DCMotor_3->run(BACKWARD);
-  DCMotor_4->setSpeed(200);
-  DCMotor_4->run(FORWARD);
-}
-
-void moveRight() {
-  DCMotor_1->setSpeed(200);
-  DCMotor_1->run(FORWARD);
-  DCMotor_2->setSpeed(200);
-  DCMotor_2->run(BACKWARD);
-  DCMotor_3->setSpeed(200);
-  DCMotor_3->run(FORWARD);
-  DCMotor_4->setSpeed(200);
-  DCMotor_4->run(BACKWARD);
-}
-
-void backward() {
-  DCMotor_1->setSpeed(200);
-  DCMotor_1->run(BACKWARD);
-  DCMotor_2->setSpeed(200);
-  DCMotor_2->run(BACKWARD);
-  DCMotor_3->setSpeed(200);
-  DCMotor_3->run(BACKWARD);
-  DCMotor_4->setSpeed(200);
-  DCMotor_4->run(BACKWARD);
-}
 
 void stopMoving() {
   DCMotor_1->setSpeed(0);
@@ -122,18 +56,7 @@ bool ps2_control;
 
 void setup(){
   AFMS.begin(50);
-  int error = 0;
-  int c=30;
-  do{
-    error = ps2x.config_gamepad(13,11,10,12, true, true);
-    if(error == 0){
-      ps2_control=true;
-      break;
-    }else{
-      ps2_control=false;
-      delay(80);
-    }
-  }while(c--);
+  
   Serial.begin(38400);
   recv_count = 0;
   start_frame = false;
@@ -145,68 +68,6 @@ void setup(){
 }
 
 void loop(){
-  if(ps2_control){ //從手柄接收模式
-    ps2x.read_gamepad(false, 0);
-    delay(30);
-    if (ps2x.Button(PSB_PAD_UP)) {
-      if (ps2x.Button(PSB_L2)) {
-        DCMotor_2->setSpeed(200);
-        DCMotor_2->run(FORWARD);
-        DCMotor_4->setSpeed(200);
-        DCMotor_4->run(FORWARD);
-      } else if (ps2x.Button(PSB_R2)) {
-        DCMotor_1->setSpeed(200);
-        DCMotor_1->run(FORWARD);
-        DCMotor_3->setSpeed(200);
-        DCMotor_3->run(FORWARD);
-      } else {
-        forward();
-      }
-    } else if (ps2x.Button(PSB_PAD_DOWN)) {
-      if (ps2x.Button(PSB_L2)) {
-        DCMotor_2->setSpeed(200);
-        DCMotor_2->run(BACKWARD);
-        DCMotor_4->setSpeed(200);
-        DCMotor_4->run(BACKWARD);
-      } else if (ps2x.Button(PSB_R2)) {
-        DCMotor_1->setSpeed(200);
-        DCMotor_1->run(BACKWARD);
-        DCMotor_3->setSpeed(200);
-        DCMotor_3->run(BACKWARD);
-      } else {
-        backward();
-      }
-    } else if (ps2x.Button(PSB_PAD_LEFT)) {
-      turnLeft();
-    } else if (ps2x.Button(PSB_PAD_RIGHT)) {
-      turnRight();
-    } else if (ps2x.Button(PSB_L1)) {
-      moveLeft();
-    } else if (ps2x.Button(PSB_R1)) {
-      moveRight();
-    } else {
-      stopMoving();
-    }
-    // 按下手柄X按钮，手柄震动一下
-    if (ps2x.Button(PSB_CROSS)) {
-      ps2x.read_gamepad(true, 200);
-      delay(300);
-      ps2x.read_gamepad(false, 0);
-    }
-    delay(2);
-    
-    // this runs at 100Hz
-    if(millis()-last_time_control>10){
-
-      m1_speed = Encoder1.getspeed();
-      m2_speed = Encoder2.getspeed();
-      m3_speed = Encoder3.getspeed();
-      m4_speed = Encoder4.getspeed();
-    
-      last_time_control = millis();
-    }
-  }
-  else{ //ROS模式
     if(Serial.available()){
       uint8_t t = Serial.read();
       if(start_frame){
@@ -274,7 +135,7 @@ void loop(){
     
       last_time_control = millis();
     }
-  }
+  
   // send data every 50ms
   if(millis()-last_time_send_data>50){
     
