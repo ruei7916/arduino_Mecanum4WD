@@ -96,6 +96,7 @@ void loop(){
                 Servo0->writeServo(degree);
                 delay(50);
               }
+              delay(500);
               for (int i=0;i<21;i++){
                 degree-=6;
                 Servo0->writeServo(degree);
